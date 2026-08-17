@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEC Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --turf:#0E1512; --turf-2:#16201C; --turf-3:#1E2A25;
+  --line:#2A3833; --line-2:#3A4B44;
+  --chalk:#E8EDE9; --chalk-dim:#8A9A91;
+  --bulb:#FFB000; --flag:#C9432F;
+  --team:#FFB000;
+}
+/* ---- Themes: each just remaps the same variable set ---- */
+body[data-theme="turf"]{
+  --turf:#0E1512; --turf-2:#16201C; --turf-3:#1E2A25;
+  --line:#2A3833; --line-2:#3A4B44; --chalk:#E8EDE9; --chalk-dim:#8A9A91; --bulb:#FFB000; --flag:#C9432F;
+}
+body[data-theme="charcoal"]{
+  --turf:#0A0A0B; --turf-2:#141416; --turf-3:#1C1C1F;
+  --line:#2C2C30; --line-2:#3E3E44; --chalk:#EDEDEF; --chalk-dim:#8C8C94; --bulb:#5EE0C0; --flag:#FF5C5C;
+}
+body[data-theme="midnight"]{
+  --turf:#0B1220; --turf-2:#131C30; --turf-3:#1B2740;
+  --line:#28345A; --line-2:#3A4A7A; --chalk:#E7ECFB; --chalk-dim:#8E9BC4; --bulb:#5FA8FF; --flag:#FF6B6B;
+}
+body[data-theme="crimson"]{
+  --turf:#160B0D; --turf-2:#221215; --turf-3:#2E191D;
+  --line:#472228; --line-2:#623038; --chalk:#F3E9E8; --chalk-dim:#B08C8C; --bulb:#FFB000; --flag:#FF6A4D;
+}
+body[data-theme="sunset"]{
+  --turf:#1A120E; --turf-2:#251A14; --turf-3:#33241B;
+  --line:#4A3324; --line-2:#664731; --chalk:#F6ECE2; --chalk-dim:#C09A7C; --bulb:#FF8A3D; --flag:#E24A4A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--turf);color:var(--chalk);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+button{font:inherit;color:inherit}
+
+.topbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--turf) 95%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1440px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+.layout{max-width:1440px;margin:0 auto;display:flex;align-items:flex-start}
+.sidebar{flex:0 0 240px;width:240px;border-right:1px solid var(--line);position:sticky;top:65px;max-height:calc(100vh - 65px);overflow-y:auto;padding:10px 0 40px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.sidebar::-webkit-scrollbar{width:5px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--line)}
+.navitem{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:0;border-left:3px solid transparent;cursor:pointer;padding:10px 16px;text-align:left}
+.navitem:hover{background:var(--turf-2)}
+.navitem[aria-selected="true"]{background:var(--turf-2);border-left-color:var(--navc,var(--bulb))}
+.navitem:focus-visible{outline:2px solid var(--bulb);outline-offset:-2px}
+.navitem .nl{display:flex;align-items:center;gap:9px;font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:17px;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
+.navitem .nl i{width:4px;height:16px;flex:0 0 auto;border-radius:1px}
+.navitem .nrec{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--chalk-dim);white-space:nowrap}
+.navitem.league .nl{color:var(--bulb)}
+.navdiv{margin:10px 16px 6px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--chalk-dim);border-top:1px solid var(--line);padding-top:10px}
+.wrap{flex:1 1 auto;min-width:0;max-width:100%;padding:0 24px 90px}
+.mark{font-family:"Big Shoulders Display",sans-serif;font-weight:800;font-size:32px;letter-spacing:.04em;line-height:1;text-transform:uppercase;margin:0}
+.mark span{color:var(--bulb)}
+.status{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative}
+.pill{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:5px 10px;border-radius:2px;border:1px solid var(--bulb);color:var(--bulb)}
+.pill.live{border-color:var(--flag);color:var(--flag)}
+.seasonsel{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.seasonsel button{background:none;border:0;padding:5px 11px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.07em;color:var(--chalk-dim)}
+.seasonsel button[aria-pressed="true"]{background:var(--bulb);color:var(--turf);font-weight:600}
+.seasonsel button:focus-visible{outline:2px solid var(--bulb);outline-offset:-2px}
+
+/* theme selector */
+.themebtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);cursor:pointer;background:conic-gradient(from 180deg,var(--turf),var(--bulb));display:flex;align-items:center;justify-content:center}
+.themebtn:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+.themepop{position:absolute;top:calc(100% + 8px);right:0;background:var(--turf-2);border:1px solid var(--line);border-radius:6px;padding:10px;display:none;gap:8px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.themepop.open{display:flex}
+.swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.swatch[aria-pressed="true"]{border-color:var(--chalk)}
+.swatch:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+.swatch .lbl{position:absolute;top:calc(100% + 4px);font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--chalk-dim);white-space:nowrap}
+
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 4px}
+.subtab{background:none;border:1px solid var(--line);border-radius:2px;padding:6px 13px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--chalk-dim)}
+.subtab:hover{color:var(--chalk);border-color:var(--line-2)}
+.subtab[aria-selected="true"]{background:var(--chalk);color:var(--turf);border-color:var(--chalk);font-weight:600}
+.subtab:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+
+.sec-title{font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--chalk-dim);margin:30px 0 12px;display:flex;align-items:center;gap:12px}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--chalk-dim);margin:0 0 12px;letter-spacing:.03em}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:2px}
+table{border-collapse:collapse;width:100%;min-width:660px}
+th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{position:sticky;top:0;background:var(--turf-3);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--chalk-dim);font-weight:500;cursor:pointer;user-select:none;border-bottom:1px solid var(--line-2)}
+thead th:hover{color:var(--chalk)}
+thead th[aria-sort]{color:var(--bulb)}
+thead th .arw{opacity:.6;font-size:9px;margin-left:3px}
+tbody tr:hover{background:var(--turf-2)}
+tbody tr.hl{background:color-mix(in srgb,var(--bulb) 14%,transparent);box-shadow:inset 3px 0 0 var(--bulb)}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:"IBM Plex Mono",monospace;font-size:13px}
+td.rk{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--chalk-dim);width:34px}
+.tcell{display:flex;align-items:center;gap:9px;font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:19px;letter-spacing:.02em;text-transform:uppercase;line-height:1.1}
+.tcell i{width:4px;height:18px;flex:0 0 auto;border-radius:1px}
+.tcell button{background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.tcell button:hover{color:var(--bulb)}
+.nd{color:var(--line-2)}
+
+.field{position:relative;display:block;height:14px;min-width:110px;background:var(--turf-3);border:1px solid var(--line);border-radius:1px;overflow:hidden}
+.field .ticks{position:absolute;inset:0;display:flex}
+.field .ticks span{flex:1;border-right:1px solid rgba(255,255,255,.06)}
+.field .gain{position:absolute;top:0;bottom:0;left:0;opacity:.9}
+
+.banner{border:1px solid var(--line);border-top:5px solid var(--team);background:linear-gradient(180deg,color-mix(in srgb,var(--team) 18%,var(--turf-2)),var(--turf-2));padding:24px;border-radius:2px;margin-top:20px}
+.banner h1{font-family:"Big Shoulders Display",sans-serif;font-weight:800;font-size:clamp(36px,6.5vw,60px);line-height:.92;text-transform:uppercase;margin:0}
+.banner .sub{color:var(--chalk-dim);font-size:14px;margin-top:8px}
+.newbadge{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--bulb);color:var(--bulb);padding:2px 7px;border-radius:2px;margin-left:8px;vertical-align:middle}
+
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:20px;border-radius:2px;overflow:hidden}
+.fact{background:var(--turf-2);padding:13px 15px}
+.fact dt{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--chalk-dim);margin:0 0 4px}
+.fact dd{margin:0;font-size:15px;font-weight:500}
+.fact dd.big{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600}
+.soft{color:var(--chalk-dim);font-family:"IBM Plex Mono",monospace;font-size:11px}
+
+.rankgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.rankbtn{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--turf-2);border:1px solid var(--line);border-radius:2px;padding:13px 15px;cursor:pointer;text-align:left;width:100%}
+.rankbtn:hover{border-color:var(--bulb);background:var(--turf-3)}
+.rankbtn:focus-visible{outline:2px solid var(--bulb);outline-offset:2px}
+.rankbtn .lbl{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--chalk-dim);display:block;margin-bottom:3px}
+.rankbtn .val{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600}
+.rankbtn .pos{font-family:"Big Shoulders Display",sans-serif;font-weight:800;font-size:30px;line-height:1;color:var(--bulb)}
+.rankbtn .pos.nd{color:var(--line-2)}
+.rankbtn .pos sup{font-size:13px;font-weight:700}
+
+.box{border:1px solid var(--line);border-radius:2px;background:var(--turf-2)}
+.box ul{list-style:none;margin:0;padding:0}
+.box li{padding:11px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+.box li:last-child{border-bottom:0}
+.box li .who{font-weight:500}
+.box li .who em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--bulb);margin-right:8px}
+.box li .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--chalk-dim);text-align:right}
+.empty{padding:20px 15px;color:var(--chalk-dim);font-size:14px}
+.empty strong{color:var(--chalk);font-weight:600;display:block;margin-bottom:4px}
+.empty code{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--bulb);word-break:break-all}
+.unver{color:var(--flag)}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:860px){.cols{grid-template-columns:1fr}}
+
+.note{border:1px solid var(--line-2);border-left:4px solid var(--bulb);background:var(--turf-2);padding:15px 17px;margin-top:20px;border-radius:2px;font-size:14px;color:var(--chalk)}
+.note.err{border-left-color:var(--flag)}
+.note strong{color:var(--bulb)}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--chalk-dim);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body data-theme="charcoal">
+
+<div class="topbar">
+  <div class="topbar-in">
+    <h1 class="mark">SEC <span>Board</span></h1>
+    <div class="status">
+      <span class="pill" id="srcPill">Connecting…</span>
+      <div class="seasonsel" id="seasonSel">
+        <button data-s="2025" aria-pressed="true">2025 final</button>
+        <button data-s="2026" aria-pressed="false">2026</button>
+      </div>
+      <button class="themebtn" id="themeToggle" aria-haspopup="true" aria-expanded="false" title="Color theme"></button>
+      <div class="themepop" id="themePop">
+        <button class="swatch" data-theme="turf"    style="background:#16201C"><span class="lbl">Turf</span></button>
+        <button class="swatch" data-theme="charcoal" style="background:#141416"><span class="lbl">Charcoal</span></button>
+        <button class="swatch" data-theme="midnight" style="background:#131C30"><span class="lbl">Midnight</span></button>
+        <button class="swatch" data-theme="crimson"  style="background:#221215"><span class="lbl">Crimson</span></button>
+        <button class="swatch" data-theme="sunset"   style="background:#251A14"><span class="lbl">Sunset</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="tabs" role="tablist" aria-label="Teams and standings"></nav>
+  <div class="wrap">
+    <div id="view"></div>
+    <footer>
+      Coaches, quarterbacks and 2025 results verified against public reporting in July 2026. Live scores, schedules and rosters load from ESPN and CollegeFootballData through the local proxy — run <code>sec_proxy.py</code> alongside this file.
+    </footer>
+  </div>
+</div>
+
+<script>
+/* =========================== PROXY CLIENT =========================== */
+async function apiGet(prefix, path, params){
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const res = await fetch(`/api/${prefix}/${path}${qs}`);
+  const body = await res.json().catch(()=>null);
+  if(!res.ok || !body) throw new Error((body && body.error) || `HTTP ${res.status}`);
+  return body;
+}
+const espnGet = (path, params) => apiGet('espn', path, params);
+const cfbdGet = (path, params) => apiGet('cfbd', path, params);
+
+/* simple in-memory caches so switching tabs doesn't re-fetch every time */
+const _cache = {schedule:{}, roster:{}, scoreboard:null, scoreboardAt:0};
+
+/* =========================== TEAM DATA =========================== */
+const TEAMS=[
+{k:"alabama",name:"Alabama",mascot:"Crimson Tide",espn:333,c1:"#9E1B32",c2:"#A8ADB3",
+ coach:"Kalen DeBoer",coachNew:false,stadium:"Bryant-Denny Stadium",city:"Tuscaloosa, AL",
+ qb:"Keelon Russell",qbConf:"Medium",qbNote:"Open battle with Austin Mack, may not resolve until late August",
+ stars:[{n:"Ryan Williams",p:"WR",note:"unconfirmed for 2026",ver:false},{n:"Zabien Brown",p:"DB",note:"unconfirmed for 2026",ver:false}],
+ s25:{w:11,l:4,cw:7,cl:1,pf:443,pa:288}},
+{k:"arkansas",name:"Arkansas",mascot:"Razorbacks",espn:8,c1:"#9D2235",c2:"#FFFFFF",
+ coach:"Ryan Silverfield",coachNew:true,stadium:"Reynolds Razorback Stadium",city:"Fayetteville, AR",
+ qb:"KJ Jackson",qbConf:"Medium",qbNote:"Competing with AJ Hill, who followed Silverfield from Memphis",
+ stars:[],s25:{w:2,l:10,cw:0,cl:8,pf:395,pa:406}},
+{k:"auburn",name:"Auburn",mascot:"Tigers",espn:2,c1:"#0C2340",c2:"#E87722",
+ coach:"Alex Golesh",coachNew:true,stadium:"Jordan-Hare Stadium",city:"Auburn, AL",
+ qb:"Byrum Brown",qbConf:"High",qbNote:"Followed Golesh from South Florida; 3,158 passing and 1,008 rushing yards in 2025",
+ stars:[{n:"Xavier Atkins",p:"LB",note:"84 tackles, 17 TFL in 2025",ver:true},{n:"Rayshawn Pleasant",p:"KR",note:"preseason first-team all-conference",ver:true}],
+ s25:{w:5,l:7,cw:1,cl:7,pf:321,pa:248}},
+{k:"florida",name:"Florida",mascot:"Gators",espn:57,c1:"#0021A5",c2:"#FA4616",
+ coach:"Jon Sumrall",coachNew:true,stadium:"Ben Hill Griffin Stadium",city:"Gainesville, FL",
+ qb:"Aaron Philo",qbConf:"Low",qbNote:"Tramell Jones Jr. closing fast; Sumrall is keeping it open",
+ stars:[{n:"Alec Clark",p:"P",note:"preseason all-conference",ver:true}],
+ s25:{w:4,l:8,cw:2,cl:6,pf:259,pa:288}},
+{k:"georgia",name:"Georgia",mascot:"Bulldogs",espn:61,c1:"#BA0C2F",c2:"#FFFFFF",
+ coach:"Kirby Smart",coachNew:false,stadium:"Sanford Stadium",city:"Athens, GA",
+ qb:"Gunner Stockton",qbConf:"High",qbNote:"2,894 yards, 24 TD, 5 INT in his first full year starting",
+ stars:[{n:"Raylen Wilson",p:"LB",note:"preseason all-conference",ver:true},{n:"Peyton Woodring",p:"K",note:"preseason all-conference",ver:true}],
+ s25:{w:12,l:2,cw:7,cl:1,pf:449,pa:246}},
+{k:"kentucky",name:"Kentucky",mascot:"Wildcats",espn:96,c1:"#0033A0",c2:"#FFFFFF",
+ coach:"Will Stein",coachNew:true,stadium:"Kroger Field",city:"Lexington, KY",
+ qb:"Kenny Minchey",qbConf:"High",qbNote:"Transfer from Notre Dame, where he lost the job to CJ Carr",
+ stars:[],s25:{w:5,l:7,cw:2,cl:6,pf:276,pa:317}},
+{k:"lsu",name:"LSU",mascot:"Tigers",espn:99,c1:"#461D7C",c2:"#FDD023",
+ coach:"Lane Kiffin",coachNew:true,stadium:"Tiger Stadium",city:"Baton Rouge, LA",
+ qb:"Sam Leavitt",qbConf:"High",qbNote:"Transfer from Arizona State",
+ stars:[{n:"Whit Weeks",p:"LB",note:"preseason all-conference",ver:true},{n:"Princewill Umanmielen",p:"DL",note:"preseason all-conference",ver:true},{n:"Trey'Dez Green",p:"TE",note:"preseason first-team All-America",ver:true}],
+ s25:{w:7,l:6,cw:3,cl:5,pf:297,pa:258}},
+{k:"mizzou",name:"Missouri",mascot:"Tigers",espn:142,c1:"#F1B82D",c2:"#000000",
+ coach:"Eli Drinkwitz",coachNew:false,stadium:"Faurot Field",city:"Columbia, MO",
+ qb:"Austin Simmons",qbConf:"Medium",qbNote:"Transfer from Ole Miss; Matt Zollers is the fallback",
+ stars:[{n:"Ahmad Hardy",p:"RB",note:"preseason All-America",ver:true}],
+ s25:{w:8,l:5,cw:4,cl:4,pf:393,pa:246}},
+{k:"msstate",name:"Miss State",mascot:"Bulldogs",espn:344,c1:"#5D1725",c2:"#FFFFFF",
+ coach:"Jeff Lebby",coachNew:false,stadium:"Davis Wade Stadium",city:"Starkville, MS",
+ qb:"Kamario Taylor",qbConf:"High",qbNote:"Started the last two games of 2025; run-first skill set",
+ stars:[],s25:{w:5,l:8,cw:1,cl:7,pf:395,pa:393}},
+{k:"oklahoma",name:"Oklahoma",mascot:"Sooners",espn:201,c1:"#841617",c2:"#FDF9D8",
+ coach:"Brent Venables",coachNew:false,stadium:"Gaylord Family Oklahoma Memorial Stadium",city:"Norman, OK",
+ qb:"John Mateer",qbConf:"High",qbNote:"2,885 yards, 14 TD, 11 INT; a thumb injury derailed the 2025 run",
+ stars:[{n:"David Stone",p:"DL",note:"8 TFL in 2025",ver:true},{n:"Kip Lewis",p:"LB",note:"preseason all-conference",ver:true},{n:"Isaiah Sategna III",p:"PR",note:"preseason all-conference returner",ver:true}],
+ s25:{w:10,l:3,cw:6,cl:2,pf:341,pa:201}},
+{k:"olemiss",name:"Ole Miss",mascot:"Rebels",espn:145,c1:"#14213D",c2:"#CE1126",
+ coach:"Pete Golding",coachNew:true,stadium:"Vaught-Hemingway Stadium",city:"Oxford, MS",
+ qb:"Trinidad Chambliss",qbConf:"High",qbNote:"3,937 yards, 22 TD, 3 INT; extra year granted by court injunction",
+ stars:[{n:"Kewan Lacy",p:"RB",note:"preseason All-America",ver:true}],
+ s25:{w:13,l:2,cw:7,cl:1,pf:554,pa:316}},
+{k:"scarolina",name:"South Carolina",mascot:"Gamecocks",espn:2579,c1:"#73000A",c2:"#FFFFFF",
+ coach:"Shane Beamer",coachNew:false,stadium:"Williams-Brice Stadium",city:"Columbia, SC",
+ qb:"LaNorris Sellers",qbConf:"High",qbNote:"2,437 yards; took 42 sacks behind the worst pass protection in the Power 4",
+ stars:[{n:"Dylan Stewart",p:"DE",note:"33 tackles, 12 TFL, 4.5 sacks",ver:true},{n:"Nyck Harbor",p:"KR",note:"preseason all-conference returner",ver:true}],
+ s25:{w:4,l:8,cw:1,cl:7,pf:272,pa:265}},
+{k:"tennessee",name:"Tennessee",mascot:"Volunteers",espn:2633,c1:"#FF8200",c2:"#FFFFFF",
+ coach:"Josh Heupel",coachNew:false,stadium:"Neyland Stadium",city:"Knoxville, TN",
+ qb:"Faizon Brandon",qbConf:"Low",qbNote:"True freshman against redshirt freshman George MacIntyre — the most open battle in the league",
+ stars:[],s25:{w:8,l:5,cw:4,cl:4,pf:517,pa:375}},
+{k:"texas",name:"Texas",mascot:"Longhorns",espn:251,c1:"#BF5700",c2:"#FFFFFF",
+ coach:"Steve Sarkisian",coachNew:false,stadium:"Darrell K Royal–Texas Memorial Stadium",city:"Austin, TX",
+ qb:"Arch Manning",qbConf:"High",qbNote:"3,163 yards, 26 TD; best QBR in the country from November onward",
+ stars:[{n:"Cam Coleman",p:"WR",note:"transferred in from Auburn; preseason All-America",ver:true},{n:"Colin Simmons",p:"DE",note:"preseason all-conference",ver:true},{n:"Rasheem Biles",p:"LB",note:"preseason all-conference",ver:true}],
+ s25:{w:10,l:3,cw:6,cl:2,pf:396,pa:264}},
+{k:"tamu",name:"Texas A&M",mascot:"Aggies",espn:245,c1:"#500000",c2:"#FFFFFF",
+ coach:"Mike Elko",coachNew:false,stadium:"Kyle Field",city:"College Station, TX",
+ qb:"Marcel Reed",qbConf:"High",qbNote:"3,169 yards, 25 TD, 12 INT; half the picks came in the last four games",
+ stars:[{n:"Dezz Ricks",p:"CB",note:"returning starter",ver:true},{n:"Dalton Brooks",p:"S",note:"returning starter",ver:true},{n:"Daymion Sanford",p:"LB",note:"expected to miss part of the season",ver:true}],
+ s25:{w:11,l:2,cw:7,cl:1,pf:439,pa:273}},
+{k:"vandy",name:"Vanderbilt",mascot:"Commodores",espn:238,c1:"#866D4B",c2:"#FFFFFF",
+ coach:"Clark Lea",coachNew:false,stadium:"FirstBank Stadium",city:"Nashville, TN",
+ qb:"Jared Curtis",qbConf:"Low",qbNote:"Five-star freshman replacing Diego Pavia; Blaze Berlowitz is the safe option",
+ stars:[],s25:{w:10,l:3,cw:6,cl:2,pf:500,pa:297}}
+];
+
+TEAMS.forEach(t=>{
+  const g=t.s25.w+t.s25.l;
+  t.s25.g=g;
+  t.s25.ppg=+(t.s25.pf/g).toFixed(1);
+  t.s25.papg=+(t.s25.pa/g).toFixed(1);
+  t.s25.marg=+(t.s25.ppg-t.s25.papg).toFixed(1);
+});
+
+const UNITS={
+  team:{label:"Team",cols:[
+    {k:"rec",l:"W–L",type:"rec"},{k:"conf",l:"Conf",type:"conf"},
+    {k:"pf",l:"PF"},{k:"pa",l:"PA",lo:true},{k:"marg",l:"Margin/G"},{k:"g",l:"GP"}
+  ]},
+  offense:{label:"Offense",cols:[
+    {k:"ppg",l:"Pts/G"},{k:"totypg",l:"Total Yds/G",src:"api"},{k:"passpg",l:"Pass Yds/G",src:"api"},
+    {k:"rushpg",l:"Rush Yds/G",src:"api"},{k:"thirdd",l:"3rd Down %",src:"api"},{k:"tol",l:"Turnovers Lost",src:"api",lo:true}
+  ]},
+  defense:{label:"Defense",cols:[
+    {k:"papg",l:"Pts All/G",lo:true},{k:"dtotypg",l:"Yds All/G",src:"api",lo:true},{k:"dpasspg",l:"Pass All/G",src:"api",lo:true},
+    {k:"drushpg",l:"Rush All/G",src:"api",lo:true},{k:"sacks",l:"Sacks",src:"api"},{k:"tkaway",l:"Takeaways",src:"api"}
+  ]},
+  special:{label:"Special Teams",cols:[
+    {k:"fgpct",l:"FG %",src:"api"},{k:"puntavg",l:"Punt Avg",src:"api"},{k:"netpunt",l:"Net Punt",src:"api"},
+    {k:"kravg",l:"KR Avg",src:"api"},{k:"pravg",l:"PR Avg",src:"api"}
+  ]}
+};
+const TEAMRANKS=[
+  {unit:"offense",k:"ppg",l:"Scoring offense"},{unit:"defense",k:"papg",l:"Scoring defense"},
+  {unit:"team",k:"marg",l:"Point margin"},{unit:"offense",k:"totypg",l:"Total offense"},
+  {unit:"defense",k:"dtotypg",l:"Total defense"},{unit:"special",k:"fgpct",l:"Field goals"}
+];
+
+let SEASON="2025", tab="league", sub="standings", sortKey="conf", sortDir="desc", highlight=null;
+
+const colOf=(u,k)=>UNITS[u].cols.find(c=>c.k===k)||{};
+function val(t,k,unit){
+  if(SEASON!=="2025") return null;
+  if(unit && colOf(unit,k).src==="api") return null;
+  if(k==="rec")  return t.s25.w-t.s25.l;
+  if(k==="conf") return t.s25.cw-t.s25.cl;
+  return (k in t.s25)?t.s25[k]:null;
+}
+function ranksFor(unit,k){
+  const lo=colOf(unit,k).lo;
+  const arr=TEAMS.map(t=>({k:t.k,v:val(t,k,unit)})).filter(x=>x.v!==null&&x.v!==undefined);
+  if(!arr.length) return {};
+  arr.sort((a,b)=>lo?a.v-b.v:b.v-a.v);
+  const out={};
+  arr.forEach((x,i)=>{out[x.k]= i>0&&arr[i-1].v===x.v ? out[arr[i-1].k] : i+1;});
+  return out;
+}
+const ord=n=>{const s=["th","st","nd","rd"],v=n%100;return s[(v-20)%10]||s[v]||s[0]};
+const fmt=v=>(v===null||v===undefined)?'<span class="nd">—</span>':v;
+
+const view=document.getElementById('view');
+const tabsEl=document.getElementById('tabs');
+
+function recText(t){
+  if(SEASON!=="2025") return "0–0";
+  return `${t.s25.w}–${t.s25.l}`;
+}
+function buildSidebar(){
+  tabsEl.innerHTML='';
+
+  const leagueBtn=document.createElement('button');
+  leagueBtn.className='navitem league'; leagueBtn.dataset.id='league';
+  leagueBtn.setAttribute('role','tab'); leagueBtn.setAttribute('aria-selected','false');
+  leagueBtn.innerHTML=`<span class="nl">League</span>`;
+  leagueBtn.onclick=()=>go('league');
+  tabsEl.appendChild(leagueBtn);
+
+  const div=document.createElement('div');
+  div.className='navdiv';
+  div.textContent = SEASON==='2025' ? 'Standings · 2025 final' : 'Standings · 2026';
+  tabsEl.appendChild(div);
+
+  // Ranked by conference record, same ordering as the League standings table.
+  const ranked=[...TEAMS].sort((a,b)=>{
+    if(SEASON!=='2025') return a.name.localeCompare(b.name);
+    return (b.s25.cw-b.s25.cl)-(a.s25.cw-a.s25.cl);
+  });
+
+  ranked.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='navitem'; b.dataset.id=t.k;
+    b.setAttribute('role','tab'); b.setAttribute('aria-selected','false');
+    b.style.setProperty('--navc', t.c1);
+    b.innerHTML=`<span class="nl"><i style="background:${t.c1}"></i>${t.name}</span><span class="nrec">${recText(t)}</span>`;
+    b.onclick=()=>go(t.k);
+    tabsEl.appendChild(b);
+  });
+}
+buildSidebar();
+
+/* =========================== LIVE DATA HELPERS =========================== */
+async function loadScoreboard(){
+  const now=Date.now();
+  if(_cache.scoreboard && now-_cache.scoreboardAt<20000) return _cache.scoreboard;
+  const data=await espnGet('scoreboard',{groups:8,limit:100});
+  _cache.scoreboard=data; _cache.scoreboardAt=now;
+  return data;
+}
+async function loadSchedule(team){
+  if(_cache.schedule[team.k]) return _cache.schedule[team.k];
+  const data=await espnGet(`teams/${team.espn}/schedule`);
+  _cache.schedule[team.k]=data;
+  return data;
+}
+async function loadRoster(team){
+  if(_cache.roster[team.k]) return _cache.roster[team.k];
+  const data=await espnGet(`teams/${team.espn}/roster`);
+  _cache.roster[team.k]=data;
+  return data;
+}
+
+function renderSlate(container){
+  container.innerHTML=`<div class="empty"><strong>Loading Saturday's games…</strong></div>`;
+  loadScoreboard().then(data=>{
+    const games=(data.events||[]);
+    if(!games.length){
+      container.innerHTML=`<div class="empty"><strong>No games on today's ESPN scoreboard.</strong> This pulls live during the season; off-week it'll just be quiet.</div>`;
+      return;
+    }
+    container.innerHTML=`<ul>${games.map(ev=>{
+      const c=ev.competitions[0];
+      const home=c.competitors.find(x=>x.homeAway==='home');
+      const away=c.competitors.find(x=>x.homeAway==='away');
+      const state=c.status.type.state; // pre, in, post
+      const label = state==='pre' ? new Date(ev.date).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'})
+                  : state==='in' ? `LIVE · ${c.status.type.shortDetail}`
+                  : c.status.type.shortDetail;
+      return `<li><span class="who">${away.team.shortDisplayName} <span class="soft">@</span> ${home.team.shortDisplayName}</span>
+        <span class="tag">${away.score??''}${away.score!=null?'–':''}${home.score??''} · ${label}</span></li>`;
+    }).join('')}</ul>`;
+  }).catch(err=>{
+    container.innerHTML=`<div class="note err"><strong>Couldn't load the scoreboard.</strong> ${err.message}. Confirm <code>python sec_proxy.py</code> is running.</div>`;
+  });
+}
+
+function renderSchedule(container,team){
+  container.innerHTML=`<div class="empty"><strong>Loading schedule…</strong></div>`;
+  loadSchedule(team).then(data=>{
+    const events=data.events||[];
+    if(!events.length){ container.innerHTML=`<div class="empty">No schedule returned.</div>`; return; }
+    container.innerHTML=`<ul>${events.map(ev=>{
+      const c=ev.competitions[0];
+      const home=c.competitors.find(x=>x.homeAway==='home');
+      const away=c.competitors.find(x=>x.homeAway==='away');
+      const opp = home.team.id==String(team.espn) ? away.team : home.team;
+      const atVs = home.team.id==String(team.espn) ? 'vs' : 'at';
+      const date=new Date(ev.date).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      const done=c.status.type.completed;
+      const result = done ? `${c.status.type.name==='STATUS_FINAL'?'':''}${home.winner?'':''}${away.score}-${home.score}${(home.team.id==String(team.espn)?(home.winner?' W':' L'):(away.winner?' W':' L'))}` : '';
+      return `<li><span class="who">${date} · ${atVs} ${opp.shortDisplayName}</span><span class="tag">${done?result:c.status.type.shortDetail}</span></li>`;
+    }).join('')}</ul>`;
+  }).catch(err=>{
+    container.innerHTML=`<div class="note err"><strong>Couldn't load the schedule.</strong> ${err.message}</div>`;
+  });
+}
+
+function renderRoster(container,team){
+  container.innerHTML=`<div class="empty"><strong>Loading roster…</strong></div>`;
+  loadRoster(team).then(data=>{
+    const groups=data.athletes||[];
+    if(!groups.length){ container.innerHTML=`<div class="empty">No roster returned.</div>`; return; }
+    container.innerHTML=groups.map(g=>`
+      <div class="sec-title" style="margin-top:18px">${g.position||'Roster'}</div>
+      <div class="box"><ul>${(g.items||[]).slice(0,60).map(p=>`
+        <li><span class="who"><em>${(p.position&&p.position.abbreviation)||''}</em>${p.fullName}</span>
+        <span class="tag">${p.jersey?'#'+p.jersey+' · ':''}${p.displayHeight||''} ${p.displayWeight||''}</span></li>
+      `).join('')}</ul></div>`).join('');
+  }).catch(err=>{
+    container.innerHTML=`<div class="note err"><strong>Couldn't load the roster.</strong> ${err.message}</div>`;
+  });
+}
+
+/* =========================== LEAGUE VIEW =========================== */
+function leagueView(){
+  const unit = sub==='standings' ? 'team' : sub;
+  const cols = UNITS[unit].cols;
+
+  const sorted=[...TEAMS].sort((a,b)=>{
+    const av=val(a,sortKey,unit), bv=val(b,sortKey,unit);
+    if(av===null&&bv===null) return a.name.localeCompare(b.name);
+    if(av===null) return 1;
+    if(bv===null) return -1;
+    const d=colOf(unit,sortKey).lo ? av-bv : bv-av;
+    return sortDir==='desc'?d:-d;
+  });
+
+  const head=cols.map(c=>{
+    const on=c.k===sortKey;
+    return `<th data-sort="${c.k}" ${on?`aria-sort="${sortDir==='desc'?'descending':'ascending'}"`:''}>${c.l}${on?`<span class="arw">${sortDir==='desc'?'▼':'▲'}</span>`:''}</th>`;
+  }).join('');
+
+  const body=sorted.map((t,i)=>{
+    const cells=cols.map(c=>{
+      if(c.type==='rec')  return `<td class="num">${t.s25.w}–${t.s25.l}</td>`;
+      if(c.type==='conf') return `<td class="num">${t.s25.cw}–${t.s25.cl}</td>`;
+      return `<td class="num">${fmt(val(t,c.k,unit))}</td>`;
+    }).join('');
+    const pct=t.s25.cw/(t.s25.cw+t.s25.cl);
+    const bar = sub==='standings'
+      ? `<td style="width:130px"><span class="field"><span class="ticks">${'<span></span>'.repeat(8)}</span><span class="gain" style="width:${(pct*100).toFixed(1)}%;background:${t.c1}"></span></span></td>` : '';
+    return `<tr class="${highlight===t.k?'hl':''}">
+      <td class="rk">${String(i+1).padStart(2,'0')}</td>
+      <td><span class="tcell"><i style="background:${t.c1}"></i><button data-go="${t.k}">${t.name}</button></span></td>
+      ${cells}${bar}</tr>`;
+  }).join('');
+
+  const pending=cols.filter(c=>c.src==='api').length;
+  const note = pending
+    ? `<div class="note"><strong>${pending} of ${cols.length} columns are waiting on CFBD season stats.</strong> Sorting and ranking already work — these fill once the CFBD advanced-stats call is added. Points scored and allowed are computed from verified final totals.</div>`
+    : '';
+
+  return `
+  <div class="subtabs" role="tablist">
+    ${['standings','offense','defense','special'].map(s=>
+      `<button class="subtab" data-sub="${s}" aria-selected="${s===sub}">${s==='standings'?'Standings':UNITS[s].label}</button>`).join('')}
+  </div>
+  <p class="hint">Click a column to sort. Click a team to open its page.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th></th><th>Team</th>${head}${sub==='standings'?'<th></th>':''}</tr></thead>
+    <tbody>${body}</tbody></table></div>
+  ${note}
+
+  <div class="sec-title">Saturday slate <span class="pill live" style="margin-left:auto;font-size:9px">live</span></div>
+  <div class="box" id="slateBox"></div>`;
+}
+
+/* =========================== TEAM VIEW =========================== */
+function teamView(t){
+  const chips=TEAMRANKS.map(r=>{
+    const v=val(t,r.k,r.unit);
+    const rk=v===null?null:ranksFor(r.unit,r.k)[t.k];
+    return `<button class="rankbtn" data-unit="${r.unit}" data-key="${r.k}">
+      <span><span class="lbl">${r.l}</span><span class="val">${fmt(v)}</span></span>
+      <span class="pos ${rk?'':'nd'}">${rk?`${rk}<sup>${ord(rk)}</sup>`:'—'}</span></button>`;
+  }).join('');
+
+  const stars=t.stars.length
+    ? `<ul>${t.stars.map(s=>`<li><span class="who"><em>${s.p}</em>${s.n}</span><span class="tag ${s.ver?'':'unver'}">${s.note}</span></li>`).join('')}</ul>`
+    : `<div class="empty"><strong>No confirmed standouts yet.</strong> This roster didn't turn up on the preseason all-conference lists I checked. Blank beats padded.</div>`;
+
+  const leaders=[["Passing","Leading passer"],["Rushing","Leading rusher"],["Receiving","Leading receiver"],["Tackles","Leading tackler"],["Sacks","Sack leader"],["Int","Interception leader"]]
+    .map(([a,b])=>`<li><span class="who"><em>${a}</em>${b}</span><span class="tag nd">—</span></li>`).join('');
+
+  return `
+  <div class="banner" style="--team:${t.c1}">
+    <h1>${t.name}<br><span style="color:${t.c2}">${t.mascot}</span></h1>
+    <div class="sub">${t.city} · ${t.stadium}</div>
+  </div>
+
+  <dl class="facts">
+    <div class="fact"><dt>2025 overall</dt><dd class="big">${t.s25.w}–${t.s25.l}</dd></div>
+    <div class="fact"><dt>2025 conference</dt><dd class="big">${t.s25.cw}–${t.s25.cl}</dd></div>
+    <div class="fact"><dt>Head coach</dt><dd>${t.coach}${t.coachNew?'<span class="newbadge">1st year</span>':''}</dd></div>
+    <div class="fact"><dt>Projected QB1</dt><dd>${t.qb} <span class="soft">· ${t.qbConf.toLowerCase()} certainty</span></dd></div>
+  </dl>
+
+  <div class="sec-title">Where they rank in the SEC</div>
+  <p class="hint">Click a tile to open the full conference table for that stat.</p>
+  <div class="rankgrid">${chips}</div>
+
+  <div class="cols" style="margin-top:8px">
+    <div>
+      <div class="sec-title">Quarterback</div>
+      <div class="box"><ul>
+        <li><span class="who"><em>QB</em>${t.qb}</span><span class="tag">${t.qbConf} certainty</span></li>
+        <li><span class="who" style="color:var(--chalk-dim);font-size:14px">${t.qbNote}</span></li>
+      </ul></div>
+      <div class="sec-title">Players to watch</div>
+      <div class="box">${stars}</div>
+    </div>
+    <div>
+      <div class="sec-title">2026 season leaders</div>
+      <div class="box"><ul>${leaders}</ul></div>
+      <p class="hint">Zeroed until kickoff. Fills from CFBD player-season-stats once the season starts.</p>
+      <div class="sec-title">Schedule <span class="pill live" style="margin-left:auto;font-size:9px">live</span></div>
+      <div class="box" id="schedBox"></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Roster <span class="pill live" style="margin-left:auto;font-size:9px">live</span></div>
+  <div id="rosterBox"></div>`;
+}
+
+function go(id){tab=id;highlight=null;render();window.scrollTo({top:0});}
+
+function render(){
+  buildSidebar();
+  [...tabsEl.children].forEach(b=>{ if(b.dataset.id) b.setAttribute('aria-selected',String(b.dataset.id===tab)); });
+
+  const t=TEAMS.find(x=>x.k===tab);
+  view.innerHTML = t ? teamView(t) : leagueView();
+
+  if(t){
+    renderSchedule(document.getElementById('schedBox'), t);
+    renderRoster(document.getElementById('rosterBox'), t);
+  } else {
+    renderSlate(document.getElementById('slateBox'));
+  }
+
+  view.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>go(el.dataset.go));
+  view.querySelectorAll('[data-sub]').forEach(el=>el.onclick=()=>{
+    sub=el.dataset.sub;
+    sortKey = sub==='standings' ? 'conf' : UNITS[sub].cols[0].k;
+    sortDir='desc'; render();
+  });
+  view.querySelectorAll('[data-sort]').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.sort;
+    if(k===sortKey) sortDir = sortDir==='desc'?'asc':'desc';
+    else {sortKey=k;sortDir='desc';}
+    render();
+  });
+  view.querySelectorAll('.rankbtn').forEach(el=>el.onclick=()=>{
+    highlight=tab; tab='league';
+    sub = el.dataset.unit==='team' ? 'standings' : el.dataset.unit;
+    sortKey=el.dataset.key; sortDir='desc';
+    render(); window.scrollTo({top:0});
+  });
+}
+
+document.getElementById('seasonSel').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{
+    SEASON=b.dataset.s;
+    document.getElementById('seasonSel').querySelectorAll('button')
+      .forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    render();
+  };
+});
+
+/* =========================== THEME SELECTOR =========================== */
+(function(){
+  const THEMES=['turf','charcoal','midnight','crimson','sunset'];
+  const toggle=document.getElementById('themeToggle');
+  const pop=document.getElementById('themePop');
+  const swatches=[...pop.querySelectorAll('.swatch')];
+
+  function apply(theme){
+    if(!THEMES.includes(theme)) theme='charcoal';
+    document.body.setAttribute('data-theme', theme);
+    swatches.forEach(s=>s.setAttribute('aria-pressed', String(s.dataset.theme===theme)));
+    try{ localStorage.setItem('sec-board-theme', theme); }catch(e){}
+  }
+  let saved='charcoal';
+  try{ saved=localStorage.getItem('sec-board-theme')||'charcoal'; }catch(e){}
+  apply(saved);
+
+  toggle.onclick=()=>{
+    const open=pop.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+  swatches.forEach(s=>s.onclick=()=>{ apply(s.dataset.theme); });
+  document.addEventListener('click',e=>{
+    if(!pop.contains(e.target) && e.target!==toggle) pop.classList.remove('open');
+  });
+})();
+
+/* =========================== BOOT: confirm proxy is alive =========================== */
+(async function(){
+  const pill=document.getElementById('srcPill');
+  try{
+    const res=await fetch('/api/health');
+    const j=await res.json();
+    pill.textContent = j.cfbd_key_present ? 'Live · ESPN + CFBD' : 'Live · ESPN only (no CFBD key)';
+    pill.classList.remove('live');
+  }catch(e){
+    pill.textContent='Proxy not running';
+    pill.classList.add('live');
+  }
+  render();
+})();
+</script>
+</body>
+</html>
